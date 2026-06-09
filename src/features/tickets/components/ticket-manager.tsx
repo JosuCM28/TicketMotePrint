@@ -168,6 +168,8 @@ export function TicketManager() {
                 key={editingData ? `edit-${selectedId}` : "new"}
                 onTicketReady={handleFormReady}
                 initialData={editingData ?? undefined}
+                editingId={editingData && selectedId ? selectedId : undefined}
+                onUpdated={() => setRefreshTrigger((n) => n + 1)}
               />
             </div>
           ) : (

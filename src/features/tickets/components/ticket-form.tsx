@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ticketFormSchema, type TicketFormValues } from "../schemas/ticket-schema";
 import { generateTicketNumber } from "@/lib/utils";
 import type { TicketData, UnitType } from "../types/ticket.types";
+import { updateTicket } from "../actions/ticket-actions";
 
 const UNIT_OPTIONS: { value: UnitType; label: string }[] = [
   { value: "pza", label: "pza" },
@@ -41,8 +42,10 @@ function nowDate() { return new Date().toISOString().slice(0, 10); }
 function nowTime() { return new Date().toTimeString().slice(0, 5); }
 
 interface TicketFormProps {
-  onTicketReady: (t: TicketData) => void;
-  initialData?: TicketData;
+  onTicketReady:  (t: TicketData) => void;
+  initialData?:   TicketData;
+  editingId?:     number;          // si viene, hay botón Actualizar directo
+  onUpdated?:     () => void;      // callback tras actualizar exitosamente
 }
 
 function ticketDataToFormValues(data: TicketData): TicketFormValues {
@@ -64,7 +67,9 @@ function ticketDataToFormValues(data: TicketData): TicketFormValues {
   };
 }
 
-export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
+export function TicketForm({ onTicketReady, initialData, editingId, onUpdated }: TicketFormProps) {
+  const [isPending, startTransition] = useTransition();
+  const [updateMsg, setUpdateMsg]    = useState<string | null>(null);
   const {
     register,
     control,
@@ -102,15 +107,15 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
     append({ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", unitPrice: 0 });
   }, [append]);
 
-  const onSubmit = (data: TicketFormValues) => {
+  // Construye TicketData a partir de los valores del form
+  const buildTicket = (data: TicketFormValues): TicketData => {
     const date  = new Date(`${data.date}T${data.time}:00`);
     const items = data.items.map((i) => ({
       ...i,
       total: parseFloat(((i.quantity || 0) * (i.unitPrice || 0)).toFixed(2)),
     }));
     const total = items.reduce((s, i) => s + i.total, 0);
-
-    const ticket: TicketData = {
+    return {
       ticketNumber:  data.ticketNumber,
       date,
       cashierName:   data.cashierName,
@@ -120,8 +125,23 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
       amountPaid:    data.amountPaid,
       change:        Math.max(0, data.amountPaid - total),
     };
-    onTicketReady(ticket);
   };
+
+  // Generar vista previa (flujo normal)
+  const onSubmit = (data: TicketFormValues) => {
+    onTicketReady(buildTicket(data));
+  };
+
+  // Actualizar directo en DB sin ir a preview
+  const handleDirectUpdate = handleSubmit((data) => {
+    if (!editingId) return;
+    startTransition(async () => {
+      await updateTicket(editingId, buildTicket(data));
+      setUpdateMsg("¡Ticket actualizado!");
+      setTimeout(() => setUpdateMsg(null), 2500);
+      onUpdated?.();
+    });
+  });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -355,9 +375,35 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
         </CardContent>
       </Card>
 
-      <Button type="submit" className="w-full" size="lg">
-        Generar Nota de Venta
-      </Button>
+      {/* Mensaje de actualización exitosa */}
+      {updateMsg && (
+        <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-2 rounded-lg text-center">
+          ✓ {updateMsg}
+        </div>
+      )}
+
+      {/* Botones de acción */}
+      <div className={editingId ? "grid grid-cols-2 gap-3" : ""}>
+        {/* Botón actualizar — solo en modo edición */}
+        {editingId && (
+          <Button
+            type="button"
+            size="lg"
+            variant="secondary"
+            className="w-full border-2 border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+            onClick={handleDirectUpdate}
+            disabled={isPending}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            {isPending ? "Actualizando..." : "Actualizar"}
+          </Button>
+        )}
+
+        {/* Botón generar vista previa */}
+        <Button type="submit" className="w-full" size="lg">
+          Generar vista previa
+        </Button>
+      </div>
     </form>
   );
 }
