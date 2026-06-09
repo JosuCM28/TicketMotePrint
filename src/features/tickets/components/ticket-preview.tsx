@@ -6,10 +6,13 @@ import type { TicketData, CompanyInfo } from "../types/ticket.types";
 const COMPANY: CompanyInfo = {
   name: "EL MOTE",
   subtitle: "Vinos y Licores",
-  regimenFiscal: "PERSONAS FISICAS CON ACTIVIDADES EMPRESARIALES Y PROFESIONALES (612)",
+  regimenFiscal: "PERSONAS FISICAS CON ACTIVIDADES\nEMPRESARIALES Y PROFESIONALES (612)",
   rfc: "AOMG9202213C2",
   domicilioFiscal: [
-    "RUIZ CORTINEZ 1800 0, OBRERO CAMPESINA, XALAPA, CONTRA ESQ DE COMEX, VERACRUZ, MEXICO, C.P. 91020 TEL: 2281670722",
+    "RUIZ CORTINEZ 1800 0, OBRERA",
+    "CAMPESINA, XALAPA, CONTRA ESQ DE",
+    "COMEX, VERACRUZ, MEXICO, C.P. 91020 TEL:",
+    "2281670722",
   ],
   tel: "",
   website: "www.easycaja.com.mx",
