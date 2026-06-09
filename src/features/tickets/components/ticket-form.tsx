@@ -229,7 +229,8 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
                   <div className="flex-1 sm:flex-none">
                     <Input
                       type="number"
-                      min="0.01"
+                      min="0"
+                      step="any"
                       step="0.01"
                       placeholder="1"
                       {...register(`items.${index}.quantity`, { valueAsNumber: true })}
@@ -266,7 +267,7 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
                   <Input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="any"
                     placeholder="0.00"
                     {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
                   />
