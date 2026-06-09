@@ -3,15 +3,15 @@
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS deps
 
-# Instalar pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Instalar pnpm con versión fija estable (no latest)
+RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
 # Copiar manifiestos de dependencias
 COPY package.json pnpm-lock.yaml* ./
 
-# Instalar solo dependencias de producción + build
+# Instalar dependencias
 RUN pnpm install --frozen-lockfile
 
 # ─────────────────────────────────────────────
@@ -19,7 +19,7 @@ RUN pnpm install --frozen-lockfile
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
@@ -39,8 +39,6 @@ RUN pnpm build
 #  Stage 3: runner (imagen final mínima)
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS runner
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
