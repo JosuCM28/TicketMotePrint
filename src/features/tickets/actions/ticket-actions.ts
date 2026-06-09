@@ -24,11 +24,12 @@ export async function saveTicket(ticket: TicketData): Promise<{ id: number }> {
 
   await db.insert(ticketItems).values(
     ticket.items.map((item) => ({
-      ticketId: row.id,
-      name:     item.name,
-      quantity: String(item.quantity),
-      unit:     item.unit,
-      total:    String(item.total),
+      ticketId:  row.id,
+      name:      item.name,
+      quantity:  String(item.quantity),
+      unit:      item.unit,
+      unitPrice: String(item.unitPrice ?? 0),
+      total:     String(item.total),
     }))
   );
 
@@ -66,11 +67,12 @@ export async function getTicket(id: number): Promise<TicketData | null> {
     amountPaid:    parseFloat(ticket.amountPaid),
     change:        parseFloat(ticket.change),
     items: items.map((i) => ({
-      id:       String(i.id),
-      name:     i.name,
-      quantity: parseFloat(i.quantity),
-      unit:     i.unit as TicketData["items"][number]["unit"],
-      total:    parseFloat(i.total),
+      id:        String(i.id),
+      name:      i.name,
+      quantity:  parseFloat(i.quantity),
+      unit:      i.unit as TicketData["items"][number]["unit"],
+      unitPrice: parseFloat(i.unitPrice ?? "0"),
+      total:     parseFloat(i.total),
     })),
   };
 }
@@ -96,11 +98,12 @@ export async function updateTicket(id: number, ticket: TicketData): Promise<void
   await db.delete(ticketItems).where(eq(ticketItems.ticketId, id));
   await db.insert(ticketItems).values(
     ticket.items.map((item) => ({
-      ticketId: id,
-      name:     item.name,
-      quantity: String(item.quantity),
-      unit:     item.unit,
-      total:    String(item.total),
+      ticketId:  id,
+      name:      item.name,
+      quantity:  String(item.quantity),
+      unit:      item.unit,
+      unitPrice: String(item.unitPrice ?? 0),
+      total:     String(item.total),
     }))
   );
 }

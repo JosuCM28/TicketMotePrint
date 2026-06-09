@@ -5,9 +5,7 @@ export const ticketItemSchema = z.object({
   name: z.string().min(1, "El nombre del producto es requerido").max(60),
   quantity: z.number().positive("La cantidad debe ser mayor a 0"),
   unit: z.enum(["pza", "lt", "unid", "serv", "kg", "caja"]),
-  total: z
-    .number()
-    .refine((v) => v !== 0, "El importe no puede ser cero"),
+  unitPrice: z.number().positive("El precio unitario debe ser mayor a 0"),
 });
 
 export const ticketFormSchema = z.object({

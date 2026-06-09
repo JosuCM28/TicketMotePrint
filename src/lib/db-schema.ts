@@ -20,12 +20,13 @@ export const tickets = pgTable("tickets", {
 });
 
 export const ticketItems = pgTable("ticket_items", {
-  id:       serial("id").primaryKey(),
-  ticketId: integer("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
-  name:     text("name").notNull(),
-  quantity: numeric("quantity", { precision: 10, scale: 2 }).notNull(),
-  unit:     text("unit").notNull(),
-  total:    numeric("total", { precision: 10, scale: 2 }).notNull(),
+  id:        serial("id").primaryKey(),
+  ticketId:  integer("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
+  name:      text("name").notNull(),
+  quantity:  numeric("quantity",   { precision: 10, scale: 2 }).notNull(),
+  unit:      text("unit").notNull(),
+  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull().default("0"),
+  total:     numeric("total",      { precision: 10, scale: 2 }).notNull(),
 });
 
 export type TicketRow     = typeof tickets.$inferSelect;

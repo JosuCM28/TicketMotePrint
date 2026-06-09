@@ -12,7 +12,8 @@ export interface TicketItem {
   name: string;
   quantity: number;
   unit: UnitType;
-  total: number; // importe total ingresado por el usuario (NO unitario)
+  unitPrice: number; // precio por unidad
+  total: number;     // calculado: quantity × unitPrice
 }
 
 export interface TicketData {

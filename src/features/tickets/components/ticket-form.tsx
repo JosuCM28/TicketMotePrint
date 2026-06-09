@@ -37,16 +37,12 @@ const PAYMENT_OPTIONS = [
   { value: "otro", label: "Otro" },
 ];
 
-function nowDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-function nowTime() {
-  return new Date().toTimeString().slice(0, 5);
-}
+function nowDate() { return new Date().toISOString().slice(0, 10); }
+function nowTime() { return new Date().toTimeString().slice(0, 5); }
 
 interface TicketFormProps {
   onTicketReady: (t: TicketData) => void;
-  initialData?: TicketData;   // si viene, es modo edición
+  initialData?: TicketData;
 }
 
 function ticketDataToFormValues(data: TicketData): TicketFormValues {
@@ -56,7 +52,13 @@ function ticketDataToFormValues(data: TicketData): TicketFormValues {
     date:          d.toISOString().slice(0, 10),
     time:          `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,
     cashierName:   data.cashierName,
-    items:         data.items.map((i) => ({ ...i })),
+    items:         data.items.map((i) => ({
+      id:        i.id,
+      name:      i.name,
+      quantity:  i.quantity,
+      unit:      i.unit,
+      unitPrice: i.unitPrice,
+    })),
     paymentMethod: data.paymentMethod,
     amountPaid:    data.amountPaid,
   };
@@ -79,37 +81,44 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
           date: nowDate(),
           time: nowTime(),
           cashierName: "",
-          items: [{ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", total: 0 }],
+          items: [{ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", unitPrice: 0 }],
           paymentMethod: "efectivo",
           amountPaid: 0,
         },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
-  const watchItems = watch("items");
+  const watchItems      = watch("items");
   const watchAmountPaid = watch("amountPaid");
 
-  // Total = suma de importes ingresados directamente
-  const grandTotal = watchItems.reduce((s, i) => s + (i.total || 0), 0);
+  // Total = suma de (cantidad × precio unitario) por cada producto
+  const grandTotal = watchItems.reduce(
+    (s, i) => s + (i.quantity || 0) * (i.unitPrice || 0),
+    0
+  );
   const change = (watchAmountPaid || 0) - grandTotal;
 
   const addItem = useCallback(() => {
-    append({ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", total: 0 });
+    append({ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", unitPrice: 0 });
   }, [append]);
 
   const onSubmit = (data: TicketFormValues) => {
-    const date = new Date(`${data.date}T${data.time}:00`);
-    const total = data.items.reduce((s, i) => s + i.total, 0);
+    const date  = new Date(`${data.date}T${data.time}:00`);
+    const items = data.items.map((i) => ({
+      ...i,
+      total: parseFloat(((i.quantity || 0) * (i.unitPrice || 0)).toFixed(2)),
+    }));
+    const total = items.reduce((s, i) => s + i.total, 0);
 
     const ticket: TicketData = {
-      ticketNumber: data.ticketNumber,
+      ticketNumber:  data.ticketNumber,
       date,
-      cashierName: data.cashierName,
-      items: data.items,
+      cashierName:   data.cashierName,
+      items,
       total,
       paymentMethod: data.paymentMethod,
-      amountPaid: data.amountPaid,
-      change: Math.max(0, data.amountPaid - total),
+      amountPaid:    data.amountPaid,
+      change:        Math.max(0, data.amountPaid - total),
     };
     onTicketReady(ticket);
   };
@@ -127,11 +136,7 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
         <CardContent>
           <div className="space-y-1.5">
             <Label htmlFor="ticketNumber">Número de folio *</Label>
-            <Input
-              id="ticketNumber"
-              placeholder="ej. V4466C..."
-              {...register("ticketNumber")}
-            />
+            <Input id="ticketNumber" placeholder="ej. V4466C..." {...register("ticketNumber")} />
             <p className="text-xs text-muted-foreground">
               Se genera automáticamente, puedes modificarlo si lo necesitas.
             </p>
@@ -190,42 +195,63 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+
           {/* Encabezados desktop */}
-          <div className="hidden sm:grid sm:grid-cols-[1fr_64px_72px_100px_36px] gap-2 text-xs font-medium text-muted-foreground">
+          <div className="hidden sm:grid sm:grid-cols-[1fr_64px_72px_100px_80px_36px] gap-2 text-xs font-medium text-muted-foreground">
             <span>Producto / Descripción</span>
             <span>Cant.</span>
             <span>Unidad</span>
-            <span>Importe $</span>
+            <span>Precio unit. $</span>
+            <span className="text-right">Subtotal</span>
             <span />
           </div>
 
-          {fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-[1fr_64px_72px_100px_36px] sm:gap-2 sm:items-start border rounded-md p-3 sm:border-0 sm:rounded-none sm:p-0"
-            >
-              {/* Nombre */}
-              <div>
-                <Input placeholder="ej. Corona 1200" {...register(`items.${index}.name`)} />
-                {errors.items?.[index]?.name && (
-                  <p className="text-xs text-red-500 mt-0.5">{errors.items[index]?.name?.message}</p>
-                )}
-              </div>
+          {fields.map((field, index) => {
+            const qty  = watchItems[index]?.quantity  || 0;
+            const price = watchItems[index]?.unitPrice || 0;
+            const subtotal = qty * price;
 
-              {/* Cantidad + Unidad juntos en móvil */}
-              <div className="flex gap-2 sm:block">
-                <div className="flex-1 sm:flex-none">
-                  <Input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    placeholder="1"
-                    {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                  />
+            return (
+              <div
+                key={field.id}
+                className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-[1fr_64px_72px_100px_80px_36px] sm:gap-2 sm:items-start border rounded-md p-3 sm:border-0 sm:rounded-none sm:p-0"
+              >
+                {/* Nombre */}
+                <div>
+                  <Input placeholder="ej. Corona 1200" {...register(`items.${index}.name`)} />
+                  {errors.items?.[index]?.name && (
+                    <p className="text-xs text-red-500 mt-0.5">{errors.items[index]?.name?.message}</p>
+                  )}
                 </div>
-                <div className="w-24 sm:hidden">
+
+                {/* Cantidad + Unidad juntos en móvil */}
+                <div className="flex gap-2 sm:block">
+                  <div className="flex-1 sm:flex-none">
+                    <Input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      placeholder="1"
+                      {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                    />
+                  </div>
+                  <div className="w-24 sm:hidden">
+                    <Select
+                      defaultValue={initialData?.items[index]?.unit ?? "pza"}
+                      onValueChange={(v) => setValue(`items.${index}.unit`, v as UnitType)}
+                    >
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {UNIT_OPTIONS.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Unidad — solo desktop */}
+                <div className="hidden sm:block">
                   <Select
-                    defaultValue="pza"
+                    defaultValue={initialData?.items[index]?.unit ?? "pza"}
                     onValueChange={(v) => setValue(`items.${index}.unit`, v as UnitType)}
                   >
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
@@ -234,49 +260,44 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              {/* Unidad — solo desktop */}
-              <div className="hidden sm:block">
-                <Select
-                  defaultValue="pza"
-                  onValueChange={(v) => setValue(`items.${index}.unit`, v as UnitType)}
-                >
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {UNIT_OPTIONS.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+                {/* Precio unitario */}
+                <div>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                  />
+                  {errors.items?.[index]?.unitPrice && (
+                    <p className="text-xs text-red-500 mt-0.5">{errors.items[index]?.unitPrice?.message}</p>
+                  )}
+                </div>
 
-              {/* Importe total (lo ingresa el usuario) */}
-              <div>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register(`items.${index}.total`, { valueAsNumber: true })}
-                />
-                {errors.items?.[index]?.total && (
-                  <p className="text-xs text-red-500 mt-0.5">{errors.items[index]?.total?.message}</p>
-                )}
-              </div>
+                {/* Subtotal calculado (solo lectura) */}
+                <div className="flex items-center sm:justify-end">
+                  <span className="text-sm font-semibold text-gray-700">
+                    ${subtotal.toFixed(2)}
+                  </span>
+                </div>
 
-              {/* Borrar */}
-              <div className="flex justify-end sm:justify-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => fields.length > 1 && remove(index)}
-                  disabled={fields.length === 1}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {/* Borrar */}
+                <div className="flex justify-end sm:justify-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => fields.length > 1 && remove(index)}
+                    disabled={fields.length === 1}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <div className="pt-1 flex justify-end border-t">
             <span className="text-sm font-bold">Total: ${grandTotal.toFixed(2)}</span>
@@ -296,7 +317,7 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
             <div className="space-y-1.5">
               <Label>Forma de pago *</Label>
               <Select
-                defaultValue="efectivo"
+                defaultValue={initialData?.paymentMethod ?? "efectivo"}
                 onValueChange={(v) => setValue("paymentMethod", v as TicketFormValues["paymentMethod"])}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
