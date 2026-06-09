@@ -6,14 +6,12 @@ import type { TicketData, CompanyInfo } from "../types/ticket.types";
 const COMPANY: CompanyInfo = {
   name: "EL MOTE",
   subtitle: "Vinos y Licores",
-  regimenFiscal: "PERSONAS FISICAS CON ACTIVIDADES\nEMPRESARIALES Y PROFESIONALES (612)",
+  regimenFiscal: "PERSONAS FISICAS CON ACTIVIDADES EMPRESARIALES Y PROFESIONALES (612)",
   rfc: "AOMG9202213C2",
   domicilioFiscal: [
-    "RUIZ CORTINEZ 1800 0, OBRERA CAMPESINA,",
-    "XALAPA, CONTRA ESQ DE COMEX,",
-    "VERACRUZ, MEXICO, C.P. 91020",
+    "RUIZ CORTINEZ 1800 0, OBRERA CAMPESINA, XALAPA, CONTRA ESQ DE COMEX, VERACRUZ, MEXICO, C.P. 91020 TEL: 2281670722",
   ],
-  tel: "TEL: 2281670722",
+  tel: "",
   website: "www.easycaja.com.mx",
 };
 
@@ -63,9 +61,14 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
         NOTAS DE VENTA
       </div>
 
-      {/* ── FOLIO + FECHA + HORA en la misma línea (si cabe); si no, fluye naturalmente ── */}
-      <div style={{ textAlign: "center", fontSize: "11px", fontWeight: "bold", marginTop: "2px", fontFamily: FONT, wordBreak: "break-word" }}>
-        FOLIO: {ticket.ticketNumber}&nbsp;&nbsp;{fDate(ticket.date)}&nbsp;&nbsp;{fTime(ticket.date)}
+      {/* ── FOLIO + FECHA ── */}
+      <div style={{ textAlign: "center", fontSize: "11px", fontWeight: "bold", marginTop: "2px", fontFamily: FONT }}>
+        FOLIO: {ticket.ticketNumber}&nbsp;&nbsp;{fDate(ticket.date)}
+      </div>
+
+      {/* ── HORA centrada en su propia línea ── */}
+      <div style={{ textAlign: "center", fontSize: "13px", fontWeight: "bold", fontFamily: FONT }}>
+        {fTime(ticket.date)}
       </div>
 
       {/* ── EL MOTE ── */}
@@ -93,7 +96,6 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
       }}>
         <div style={{ fontWeight: "bold" }}>DOMICILIO FISCAL</div>
         {COMPANY.domicilioFiscal.map((l, i) => <div key={i}>{l}</div>)}
-        <div>{COMPANY.tel}</div>
       </div>
 
       {/* ── BOX 3 — Encargado y Cajero ── */}
