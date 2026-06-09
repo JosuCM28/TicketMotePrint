@@ -1,12 +1,14 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { tickets, ticketItems } from "@/lib/db-schema";
 import { eq, desc } from "drizzle-orm";
 import type { TicketData } from "../types/ticket.types";
 
 /* ─── Guardar ticket completo ─── */
 export async function saveTicket(ticket: TicketData): Promise<{ id: number }> {
+  const db = getDb();
+
   const [row] = await db
     .insert(tickets)
     .values({
@@ -35,6 +37,7 @@ export async function saveTicket(ticket: TicketData): Promise<{ id: number }> {
 
 /* ─── Listar tickets (resumen para sidebar) ─── */
 export async function listTickets() {
+  const db = getDb();
   return db
     .select()
     .from(tickets)
@@ -44,6 +47,8 @@ export async function listTickets() {
 
 /* ─── Obtener ticket completo con items ─── */
 export async function getTicket(id: number): Promise<TicketData | null> {
+  const db = getDb();
+
   const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id));
   if (!ticket) return null;
 
@@ -72,5 +77,6 @@ export async function getTicket(id: number): Promise<TicketData | null> {
 
 /* ─── Eliminar ticket ─── */
 export async function deleteTicket(id: number): Promise<void> {
+  const db = getDb();
   await db.delete(tickets).where(eq(tickets.id, id));
 }

@@ -3,23 +3,19 @@
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS deps
 
-# Instalar pnpm con versión fija estable (no latest)
-RUN npm install -g pnpm@9.15.4
+# pnpm 10 — misma versión que se usó para generar el lockfile
+RUN npm install -g pnpm@10.28.0
 
 WORKDIR /app
 
-# Copiar manifiestos de dependencias
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml ./
 
-# Instalar dependencias
 RUN pnpm install --frozen-lockfile
 
 # ─────────────────────────────────────────────
 #  Stage 2: build
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS builder
-
-RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
@@ -29,10 +25,10 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copiar todo el código fuente
 COPY . .
 
-# Variables de entorno necesarias para el build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
+# Usar el binario directamente — evita cualquier issue de pnpm en build
 RUN node_modules/.bin/next build
 
 # ─────────────────────────────────────────────
@@ -45,22 +41,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Crear usuario sin privilegios
+# Usuario sin privilegios
 RUN addgroup --system --gid 1001 nodejs && \
     adduser  --system --uid 1001 nextjs
 
-# Copiar los artefactos necesarios del build
-COPY --from=builder /app/public         ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static  ./.next/static
-
-# Permisos
-RUN chown -R nextjs:nodejs /app
+# Artefactos del build standalone
+COPY --from=builder --chown=nextjs:nodejs /app/public          ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static    ./.next/static
 
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
