@@ -33,7 +33,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-RUN pnpm build
+RUN node_modules/.bin/next build
 
 # ─────────────────────────────────────────────
 #  Stage 3: runner (imagen final mínima)
