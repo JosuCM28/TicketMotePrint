@@ -63,14 +63,9 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
         NOTAS DE VENTA
       </div>
 
-      {/* ── FOLIO + FECHA en una línea ── */}
-      <div style={{ textAlign: "center", fontSize: "11px", fontWeight: "bold", marginTop: "2px", fontFamily: FONT }}>
-        FOLIO: {ticket.ticketNumber}&nbsp;&nbsp;{fDate(ticket.date)}
-      </div>
-
-      {/* ── HORA sola, centrada ── */}
-      <div style={{ textAlign: "center", fontSize: "13px", fontWeight: "bold", fontFamily: FONT }}>
-        {fTime(ticket.date)}
+      {/* ── FOLIO + FECHA + HORA en la misma línea (si cabe); si no, fluye naturalmente ── */}
+      <div style={{ textAlign: "center", fontSize: "11px", fontWeight: "bold", marginTop: "2px", fontFamily: FONT, wordBreak: "break-word" }}>
+        FOLIO: {ticket.ticketNumber}&nbsp;&nbsp;{fDate(ticket.date)}&nbsp;&nbsp;{fTime(ticket.date)}
       </div>
 
       {/* ── EL MOTE ── */}
