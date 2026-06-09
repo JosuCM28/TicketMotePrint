@@ -11,6 +11,7 @@ export const ticketItemSchema = z.object({
 });
 
 export const ticketFormSchema = z.object({
+  ticketNumber: z.string().min(1, "El folio es requerido").max(40),
   date: z.string().min(1, "La fecha es requerida"),
   time: z.string().min(1, "La hora es requerida"),
   cashierName: z.string().min(2, "El nombre del encargado es requerido").max(60),

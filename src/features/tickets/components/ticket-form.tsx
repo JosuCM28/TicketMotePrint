@@ -55,6 +55,7 @@ export function TicketForm({ onTicketReady }: { onTicketReady: (t: TicketData) =
   } = useForm<TicketFormValues, unknown, TicketFormValues>({
     resolver: zodResolver(ticketFormSchema) as never,
     defaultValues: {
+      ticketNumber: generateTicketNumber(),
       date: nowDate(),
       time: nowTime(),
       cashierName: "",
@@ -81,7 +82,7 @@ export function TicketForm({ onTicketReady }: { onTicketReady: (t: TicketData) =
     const total = data.items.reduce((s, i) => s + i.total, 0);
 
     const ticket: TicketData = {
-      ticketNumber: generateTicketNumber(),
+      ticketNumber: data.ticketNumber,
       date,
       cashierName: data.cashierName,
       items: data.items,
@@ -95,6 +96,29 @@ export function TicketForm({ onTicketReady }: { onTicketReady: (t: TicketData) =
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+      {/* Folio */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Folio del Ticket
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1.5">
+            <Label htmlFor="ticketNumber">Número de folio *</Label>
+            <Input
+              id="ticketNumber"
+              placeholder="ej. V4466C..."
+              {...register("ticketNumber")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Se genera automáticamente, puedes modificarlo si lo necesitas.
+            </p>
+            {errors.ticketNumber && <p className="text-xs text-red-500">{errors.ticketNumber.message}</p>}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Fecha y hora */}
       <Card>
