@@ -44,7 +44,25 @@ function nowTime() {
   return new Date().toTimeString().slice(0, 5);
 }
 
-export function TicketForm({ onTicketReady }: { onTicketReady: (t: TicketData) => void }) {
+interface TicketFormProps {
+  onTicketReady: (t: TicketData) => void;
+  initialData?: TicketData;   // si viene, es modo edición
+}
+
+function ticketDataToFormValues(data: TicketData): TicketFormValues {
+  const d = new Date(data.date);
+  return {
+    ticketNumber:  data.ticketNumber,
+    date:          d.toISOString().slice(0, 10),
+    time:          `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,
+    cashierName:   data.cashierName,
+    items:         data.items.map((i) => ({ ...i })),
+    paymentMethod: data.paymentMethod,
+    amountPaid:    data.amountPaid,
+  };
+}
+
+export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
   const {
     register,
     control,
@@ -54,15 +72,17 @@ export function TicketForm({ onTicketReady }: { onTicketReady: (t: TicketData) =
     formState: { errors },
   } = useForm<TicketFormValues, unknown, TicketFormValues>({
     resolver: zodResolver(ticketFormSchema) as never,
-    defaultValues: {
-      ticketNumber: generateTicketNumber(),
-      date: nowDate(),
-      time: nowTime(),
-      cashierName: "",
-      items: [{ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", total: 0 }],
-      paymentMethod: "efectivo",
-      amountPaid: 0,
-    },
+    defaultValues: initialData
+      ? ticketDataToFormValues(initialData)
+      : {
+          ticketNumber: generateTicketNumber(),
+          date: nowDate(),
+          time: nowTime(),
+          cashierName: "",
+          items: [{ id: crypto.randomUUID(), name: "", quantity: 1, unit: "pza", total: 0 }],
+          paymentMethod: "efectivo",
+          amountPaid: 0,
+        },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });

@@ -75,6 +75,36 @@ export async function getTicket(id: number): Promise<TicketData | null> {
   };
 }
 
+/* ─── Actualizar ticket completo ─── */
+export async function updateTicket(id: number, ticket: TicketData): Promise<void> {
+  const db = getDb();
+
+  await db
+    .update(tickets)
+    .set({
+      ticketNumber:  ticket.ticketNumber,
+      cashierName:   ticket.cashierName,
+      date:          ticket.date,
+      total:         String(ticket.total),
+      paymentMethod: ticket.paymentMethod,
+      amountPaid:    String(ticket.amountPaid),
+      change:        String(ticket.change),
+    })
+    .where(eq(tickets.id, id));
+
+  // Reemplazar items: borrar los anteriores e insertar los nuevos
+  await db.delete(ticketItems).where(eq(ticketItems.ticketId, id));
+  await db.insert(ticketItems).values(
+    ticket.items.map((item) => ({
+      ticketId: id,
+      name:     item.name,
+      quantity: String(item.quantity),
+      unit:     item.unit,
+      total:    String(item.total),
+    }))
+  );
+}
+
 /* ─── Eliminar ticket ─── */
 export async function deleteTicket(id: number): Promise<void> {
   const db = getDb();
