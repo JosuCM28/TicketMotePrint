@@ -63,7 +63,7 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
       {/* FOLIO */}
       <div style={{ fontSize: "9px", fontWeight: "bold", marginTop: "2px", fontFamily: MONO }}>
         <div>FOLIO: {ticket.ticketNumber}</div>
-        <div>{fDate(ticket.date)}</div>
+        <div>{fDate(ticket.date)} {fTime(ticket.date)}</div>
       </div>
 
       {/* EL MOTE */}
@@ -72,7 +72,6 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
           {COMPANY.name}
         </div>
         <div style={{ fontSize: "10px", fontFamily: FONT }}>{COMPANY.subtitle}</div>
-        <div style={{ textAlign: "right", fontSize: "10px", fontFamily: FONT }}>{fTime(ticket.date)}</div>
       </div>
 
       {/* BOX 1 — Régimen Fiscal */}
