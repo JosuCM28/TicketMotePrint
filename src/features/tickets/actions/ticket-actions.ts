@@ -1,9 +1,26 @@
 "use server";
 
 import { getDb } from "@/lib/db";
-import { tickets, ticketItems } from "@/lib/db-schema";
-import { eq, desc } from "drizzle-orm";
+import { tickets, ticketItems, type TicketRow } from "@/lib/db-schema";
+import { eq, desc, gte, lte, and, count } from "drizzle-orm";
 import type { TicketData } from "../types/ticket.types";
+
+export type PageSize = 10 | 30 | 50 | "all";
+
+export interface ListTicketsParams {
+  dateFrom?: string;  // "YYYY-MM-DD"
+  dateTo?:   string;  // "YYYY-MM-DD"
+  page?:     number;
+  pageSize?: PageSize;
+}
+
+export interface ListTicketsResult {
+  rows:       TicketRow[];
+  total:      number;
+  page:       number;
+  pageSize:   PageSize;
+  totalPages: number;
+}
 
 /* ─── Guardar ticket completo ─── */
 export async function saveTicket(ticket: TicketData): Promise<{ id: number }> {
@@ -36,14 +53,38 @@ export async function saveTicket(ticket: TicketData): Promise<{ id: number }> {
   return { id: row.id };
 }
 
-/* ─── Listar tickets (resumen para sidebar) ─── */
-export async function listTickets() {
-  const db = getDb();
-  return db
-    .select()
+/* ─── Listar tickets con filtros y paginación ─── */
+export async function listTickets(params: ListTicketsParams = {}): Promise<ListTicketsResult> {
+  const db       = getDb();
+  const page     = params.page     ?? 1;
+  const pageSize = params.pageSize ?? 10;
+
+  // Construir condiciones WHERE
+  const conditions = [];
+  if (params.dateFrom) {
+    conditions.push(gte(tickets.date, new Date(`${params.dateFrom}T00:00:00`)));
+  }
+  if (params.dateTo) {
+    conditions.push(lte(tickets.date, new Date(`${params.dateTo}T23:59:59`)));
+  }
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Contar total
+  const [{ value: total }] = await db
+    .select({ value: count() })
     .from(tickets)
-    .orderBy(desc(tickets.createdAt))
-    .limit(100);
+    .where(where);
+
+  // Query con o sin límite
+  const baseQuery = db.select().from(tickets).where(where).orderBy(desc(tickets.date));
+
+  const rows = pageSize === "all"
+    ? await baseQuery
+    : await baseQuery.limit(pageSize).offset((page - 1) * pageSize);
+
+  const totalPages = pageSize === "all" ? 1 : Math.ceil(total / pageSize);
+
+  return { rows, total, page, pageSize, totalPages };
 }
 
 /* ─── Obtener ticket completo con items ─── */

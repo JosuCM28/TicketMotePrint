@@ -231,7 +231,6 @@ export function TicketForm({ onTicketReady, initialData }: TicketFormProps) {
                       type="number"
                       min="0"
                       step="any"
-                      step="0.01"
                       placeholder="1"
                       {...register(`items.${index}.quantity`, { valueAsNumber: true })}
                     />
