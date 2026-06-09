@@ -111,9 +111,10 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
       </div>
 
       {/* ── Bienvenidos ── */}
-      <div style={{ textAlign: "center", fontSize: "11px", margin: "2px 0 6px", fontFamily: FONT }}>
+      <div style={{ textAlign: "center", fontSize: "11px", margin: "2px 0 4px", fontFamily: FONT }}>
         Bienvenidos..
       </div>
+      <div style={{ borderTop: "0.5px solid #000", margin: "0 0 5px" }} />
 
       {/* ── Items ── */}
       <div style={{ width: "100%", marginBottom: "4px" }}>
@@ -170,12 +171,13 @@ export function TicketPreview({ ticket }: { ticket: TicketData }) {
           {fDateTime(ticket.date)}&nbsp;{PAYMENT_LABELS[ticket.paymentMethod] ?? ticket.paymentMethod}
         </span>
         <span style={{ fontWeight: "bold", flexShrink: 0, marginLeft: "4px" }}>
-          {fMoney(ticket.amountPaid)}
+          {fMoney(ticket.amountPaid > 0 ? ticket.amountPaid : ticket.total)}
         </span>
       </div>
 
       {/* ── Pie ── */}
-      <div style={{ textAlign: "center", fontSize: "11px", fontFamily: FONT, marginTop: "4px" }}>
+      <div style={{ borderTop: "0.5px solid #000", margin: "4px 0 4px" }} />
+      <div style={{ textAlign: "center", fontSize: "11px", fontFamily: FONT }}>
         Punto de venta <span style={{ textDecoration: "underline" }}>{COMPANY.website}</span>
       </div>
 
