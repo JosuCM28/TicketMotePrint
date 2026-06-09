@@ -8,4 +8,7 @@ README.md
 *.md
 Dockerfile
 .dockerignore
-.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

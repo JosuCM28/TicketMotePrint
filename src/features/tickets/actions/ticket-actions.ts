@@ -1,0 +1,76 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { tickets, ticketItems } from "@/lib/db-schema";
+import { eq, desc } from "drizzle-orm";
+import type { TicketData } from "../types/ticket.types";
+
+/* ─── Guardar ticket completo ─── */
+export async function saveTicket(ticket: TicketData): Promise<{ id: number }> {
+  const [row] = await db
+    .insert(tickets)
+    .values({
+      ticketNumber:  ticket.ticketNumber,
+      cashierName:   ticket.cashierName,
+      date:          ticket.date,
+      total:         String(ticket.total),
+      paymentMethod: ticket.paymentMethod,
+      amountPaid:    String(ticket.amountPaid),
+      change:        String(ticket.change),
+    })
+    .returning({ id: tickets.id });
+
+  await db.insert(ticketItems).values(
+    ticket.items.map((item) => ({
+      ticketId: row.id,
+      name:     item.name,
+      quantity: String(item.quantity),
+      unit:     item.unit,
+      total:    String(item.total),
+    }))
+  );
+
+  return { id: row.id };
+}
+
+/* ─── Listar tickets (resumen para sidebar) ─── */
+export async function listTickets() {
+  return db
+    .select()
+    .from(tickets)
+    .orderBy(desc(tickets.createdAt))
+    .limit(100);
+}
+
+/* ─── Obtener ticket completo con items ─── */
+export async function getTicket(id: number): Promise<TicketData | null> {
+  const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id));
+  if (!ticket) return null;
+
+  const items = await db
+    .select()
+    .from(ticketItems)
+    .where(eq(ticketItems.ticketId, id));
+
+  return {
+    ticketNumber:  ticket.ticketNumber,
+    cashierName:   ticket.cashierName,
+    date:          new Date(ticket.date),
+    total:         parseFloat(ticket.total),
+    paymentMethod: ticket.paymentMethod as TicketData["paymentMethod"],
+    amountPaid:    parseFloat(ticket.amountPaid),
+    change:        parseFloat(ticket.change),
+    items: items.map((i) => ({
+      id:       String(i.id),
+      name:     i.name,
+      quantity: parseFloat(i.quantity),
+      unit:     i.unit as TicketData["items"][number]["unit"],
+      total:    parseFloat(i.total),
+    })),
+  };
+}
+
+/* ─── Eliminar ticket ─── */
+export async function deleteTicket(id: number): Promise<void> {
+  await db.delete(tickets).where(eq(tickets.id, id));
+}
