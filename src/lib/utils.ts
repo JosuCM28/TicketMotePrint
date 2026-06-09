@@ -30,9 +30,7 @@ export function formatTime(date: Date): string {
 }
 
 export function generateTicketNumber(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const prefix = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  const mid = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  const suffix = Math.floor(Math.random() * 900000 + 100000).toString();
-  return `V${prefix}${mid}${suffix}`;
+  // Patrón fijo: V38309C1S1B1E1T + timestamp para unicidad
+  const ts = Date.now().toString().slice(-6);
+  return `V38309C1S1B1E1T${ts}`;
 }
