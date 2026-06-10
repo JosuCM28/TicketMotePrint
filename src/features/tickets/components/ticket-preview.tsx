@@ -41,7 +41,7 @@ const FONT = "Arial, Helvetica, sans-serif";
 const MONO = "'Courier New', Courier, monospace";
 
 export function TicketPreview({ ticket }: { ticket: TicketData }) {
-  const totalWords = numberToWords(Math.abs(ticket.total));
+  const totalWords = numberToWords(Math.abs(ticket.total)).toUpperCase();
 
   return (
     <div
