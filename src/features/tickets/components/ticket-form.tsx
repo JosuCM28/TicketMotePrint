@@ -196,7 +196,7 @@ export function TicketForm({ onTicketReady, initialData, editingId, onUpdated }:
         <CardContent>
           <div className="space-y-1.5">
             <Label htmlFor="cashierName">Nombre completo *</Label>
-            <Input id="cashierName" placeholder="ej. Gustavo Arcos Mora" {...register("cashierName")} />
+            <Input id="cashierName" placeholder="ej. Gustavo Arcos Mora" value='Gustavo Arcos Mora' {...register("cashierName")} />
             {errors.cashierName && <p className="text-xs text-red-500">{errors.cashierName.message}</p>}
           </div>
         </CardContent>
