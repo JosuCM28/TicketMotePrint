@@ -180,7 +180,21 @@ export function TicketForm({ onTicketReady, initialData, editingId, onUpdated }:
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="time">Hora *</Label>
-            <Input id="time" type="time" {...register("time")} />
+            <Input
+              id="time"
+              type="text"
+              placeholder="HH:MM"
+              maxLength={5}
+              pattern="[0-2][0-9]:[0-5][0-9]"
+              onBlur={(e) => {
+                // Auto-formatear si el usuario escribe sin ":"
+                const v = e.target.value.replace(/\D/g, "");
+                if (v.length === 4) {
+                  e.target.value = `${v.slice(0,2)}:${v.slice(2)}`;
+                }
+              }}
+              {...register("time")}
+            />
             {errors.time && <p className="text-xs text-red-500">{errors.time.message}</p>}
           </div>
         </CardContent>
