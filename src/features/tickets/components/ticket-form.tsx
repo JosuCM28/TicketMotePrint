@@ -39,7 +39,7 @@ const PAYMENT_OPTIONS = [
 ];
 
 function nowDate() { return new Date().toISOString().slice(0, 10); }
-function nowTime() { return new Date().toTimeString().slice(0, 5); }
+function nowTime() { return new Date().toTimeString().slice(0, 8); } // HH:MM:SS
 
 interface TicketFormProps {
   onTicketReady:  (t: TicketData) => void;
@@ -53,7 +53,7 @@ function ticketDataToFormValues(data: TicketData): TicketFormValues {
   return {
     ticketNumber:  data.ticketNumber,
     date:          d.toISOString().slice(0, 10),
-    time:          `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,
+    time:          `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`,
     cashierName:   data.cashierName,
     items:         data.items.map((i) => ({
       id:        i.id,
@@ -109,7 +109,7 @@ export function TicketForm({ onTicketReady, initialData, editingId, onUpdated }:
 
   // Construye TicketData a partir de los valores del form
   const buildTicket = (data: TicketFormValues): TicketData => {
-    const date  = new Date(`${data.date}T${data.time}:00`);
+    const date  = new Date(`${data.date}T${data.time}`);
     const items = data.items.map((i) => ({
       ...i,
       total: parseFloat(((i.quantity || 0) * (i.unitPrice || 0)).toFixed(2)),
@@ -183,16 +183,17 @@ export function TicketForm({ onTicketReady, initialData, editingId, onUpdated }:
             <Input
               id="time"
               type="text"
-              placeholder="HH:MM"
-              maxLength={5}
-              pattern="[0-2][0-9]:[0-5][0-9]"
+              placeholder="HH:MM:SS"
+              maxLength={8}
+              pattern="[0-2][0-9]:[0-5][0-9]:[0-5][0-9]"
               {...(() => {
                 const reg = register("time");
                 return {
                   ...reg,
                   onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
                     const v = e.target.value.replace(/\D/g, "");
-                    if (v.length === 4) e.target.value = `${v.slice(0,2)}:${v.slice(2)}`;
+                    if (v.length === 4) e.target.value = `${v.slice(0,2)}:${v.slice(2,4)}:00`;
+                    if (v.length === 6) e.target.value = `${v.slice(0,2)}:${v.slice(2,4)}:${v.slice(4)}`;
                     reg.onBlur(e);
                   },
                 };

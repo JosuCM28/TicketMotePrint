@@ -11,7 +11,7 @@ export const ticketItemSchema = z.object({
 export const ticketFormSchema = z.object({
   ticketNumber: z.string().min(1, "El folio es requerido").max(40),
   date: z.string().min(1, "La fecha es requerida"),
-  time: z.string().min(1, "La hora es requerida"),
+  time: z.string().regex(/^[0-2]\d:[0-5]\d(:[0-5]\d)?$/, "Formato HH:MM o HH:MM:SS"),
   cashierName: z.string().min(2, "El nombre del encargado es requerido").max(60),
   items: z.array(ticketItemSchema).min(1, "Debes agregar al menos un producto"),
   paymentMethod: z.enum([
